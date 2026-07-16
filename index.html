@@ -42,8 +42,6 @@
   .dot.off{ background:var(--danger); animation:none; }
   @keyframes pulse{ 0%,100%{opacity:1; box-shadow:0 0 0 0 rgba(201,162,39,0.5);} 50%{opacity:0.5; box-shadow:0 0 0 4px rgba(201,162,39,0);} }
   .sub{ color:var(--text-dim); font-size:13px; margin:0 0 20px; border-bottom:1px solid var(--line); padding-bottom:20px; }
-  .install-btn{ background:transparent; border:1px solid var(--gold-soft); color:var(--gold); font-size:11px; letter-spacing:0.4px; padding:6px 12px; border-radius:6px; cursor:pointer; font-family:var(--font-body); }
-  .install-btn:hover{ background:rgba(201,162,39,0.1); }
   .settings-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:11px; color:var(--text-dim); margin:-6px 0 22px; flex-wrap:wrap; }
   .settings-row label{ display:flex; align-items:center; gap:6px; }
   .settings-row select{ background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:5px; padding:4px 6px; font-size:11px; font-family:var(--font-body); }
@@ -73,13 +71,6 @@
   .empty{ text-align:center; color:var(--text-dim); font-size:13px; padding:50px 20px; border:1px dashed var(--line); border-radius:10px; }
   .toast{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--gold); color:#14120f; font-size:13px; font-weight:600; padding:9px 18px; border-radius:20px; opacity:0; pointer-events:none; transition:opacity 0.2s ease, transform 0.2s ease; }
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
-  .modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:100; opacity:0; pointer-events:none; transition:opacity 0.2s ease; padding:20px; }
-  .modal-overlay.show{ opacity:1; pointer-events:auto; }
-  .modal{ background:var(--panel); border:1px solid var(--line); border-top:2px solid var(--gold); border-radius:10px; padding:20px; max-width:380px; width:100%; }
-  .modal h3{ font-family:var(--font-display); color:var(--gold); letter-spacing:1px; margin:0 0 12px; font-size:22px; font-weight:400; }
-  .modal p{ font-size:13px; line-height:1.6; color:var(--text); margin:0 0 14px; }
-  .modal p b{ color:var(--gold); }
-  .modal-close{ background:var(--gold); color:#14120f; font-weight:600; font-size:12px; padding:8px 16px; border-radius:6px; width:100%; }
   .setup-banner{ background:var(--panel); border:1px solid var(--danger); border-radius:10px; padding:16px; margin-bottom:20px; font-size:13px; line-height:1.6; }
   .setup-banner b{ color:var(--gold); }
 </style>
@@ -90,7 +81,6 @@
     <div class="hdr">
       <h1>RELAY</h1>
       <div class="hdr-actions">
-        <button class="install-btn" id="install-btn">+ Add to Home Screen</button>
         <div class="status"><span class="dot" id="status-dot"></span><span id="status-text">connecting…</span></div>
       </div>
     </div>
@@ -127,23 +117,14 @@
   </div>
   <div class="toast" id="toast"></div>
 
-  <div class="modal-overlay" id="install-overlay">
-    <div class="modal">
-      <h3>Add to Home Screen</h3>
-      <p><b>iPhone (Safari):</b> tap the Share icon at the bottom, then scroll down and tap "Add to Home Screen".</p>
-      <p><b>Android (Chrome):</b> tap the ⋮ menu top right, then tap "Add to Home screen" or "Install app".</p>
-      <p><b>PC:</b> bookmark this page, or click the install icon in the address bar if your browser shows one.</p>
-      <button class="modal-close" id="modal-close">Got it</button>
-    </div>
-  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 (function(){
   // ---- FILL THESE IN from your Supabase project (Settings > API) ----
-  const SUPABASE_URL = 'https://spgoegviwtunultgczyh.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwZ29lZ3Zpd3R1bnVsdGdjenloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MTg3NDUsImV4cCI6MjA5OTI5NDc0NX0.cFOzEjOXVc5e89xngtWP7dzJ7SS6fJpF5xWtHgGC1kQ';
+  const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
   // ---------------------------------------------------------------------
 
   const needsSetup = SUPABASE_URL.includes('YOUR_SUPABASE_URL') || SUPABASE_ANON_KEY.includes('YOUR_SUPABASE_ANON_KEY');
@@ -164,14 +145,10 @@
   const statusText = document.getElementById('status-text');
   const statusDot = document.getElementById('status-dot');
   const toastEl = document.getElementById('toast');
-  const installBtn = document.getElementById('install-btn');
-  const installOverlay = document.getElementById('install-overlay');
-  const modalClose = document.getElementById('modal-close');
   const autoclearSelect = document.getElementById('autoclear');
 
   let entries = [];
   let toastTimer = null;
-  let deferredInstallPrompt = null;
 
   function showToast(msg){
     toastEl.textContent = msg;
@@ -282,15 +259,6 @@
     const { error } = await supabase.from(TABLE).delete().lt('created_at', cutoff);
     if(!error) fetchEntries();
   }
-
-  // --- install to home screen ---
-  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstallPrompt = e; });
-  installBtn.addEventListener('click', async () => {
-    if(deferredInstallPrompt){ deferredInstallPrompt.prompt(); deferredInstallPrompt = null; }
-    else{ installOverlay.classList.add('show'); }
-  });
-  modalClose.addEventListener('click', () => installOverlay.classList.remove('show'));
-  installOverlay.addEventListener('click', (e) => { if(e.target === installOverlay) installOverlay.classList.remove('show'); });
 
   // --- service worker (enables install + offline app shell) ---
   if('serviceWorker' in navigator){
