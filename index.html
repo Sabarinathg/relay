@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Relay</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#14120f">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Relay">
+<style>
+  :root{
+    --bg:#14120f;
+    --panel:#1c1a16;
+    --panel-2:#211f1a;
+    --line:#332f27;
+    --gold:#c9a227;
+    --gold-soft:#8a7326;
+    --text:#ede7dc;
+    --text-dim:#8a8578;
+    --danger:#a8462f;
+    --font-display:'Bebas Neue', 'Arial Narrow', sans-serif;
+    --font-body:-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0;
+    background:var(--bg); color:var(--text);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+  }
+  #root{ min-height:100vh; display:flex; justify-content:center; padding:28px 16px 60px; }
+  .wrap{ width:100%; max-width:640px; }
+  .hdr{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:6px; }
+  .hdr h1{ font-family:var(--font-display); font-size:38px; letter-spacing:2px; margin:0; color:var(--gold); font-weight:400; }
+  .hdr-actions{ display:flex; align-items:center; gap:10px; }
+  .status{ display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-dim); letter-spacing:0.5px; text-transform:uppercase; }
+  .dot{ width:7px;height:7px;border-radius:50%; background:var(--gold); animation:pulse 2s ease-in-out infinite; }
+  .dot.off{ background:var(--danger); animation:none; }
+  @keyframes pulse{ 0%,100%{opacity:1; box-shadow:0 0 0 0 rgba(201,162,39,0.5);} 50%{opacity:0.5; box-shadow:0 0 0 4px rgba(201,162,39,0);} }
+  .sub{ color:var(--text-dim); font-size:13px; margin:0 0 20px; border-bottom:1px solid var(--line); padding-bottom:20px; }
+  .install-btn{ background:transparent; border:1px solid var(--gold-soft); color:var(--gold); font-size:11px; letter-spacing:0.4px; padding:6px 12px; border-radius:6px; cursor:pointer; font-family:var(--font-body); }
+  .install-btn:hover{ background:rgba(201,162,39,0.1); }
+  .settings-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:11px; color:var(--text-dim); margin:-6px 0 22px; flex-wrap:wrap; }
+  .settings-row label{ display:flex; align-items:center; gap:6px; }
+  .settings-row select{ background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:5px; padding:4px 6px; font-size:11px; font-family:var(--font-body); }
+  .composer{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:26px; }
+  textarea{ width:100%; min-height:90px; resize:vertical; background:transparent; border:none; outline:none; color:var(--text); font-family:var(--font-body); font-size:15px; line-height:1.5; }
+  textarea::placeholder{ color:var(--text-dim); }
+  .composer-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:10px; border-top:1px solid var(--line); }
+  .charcount{ font-size:11px; color:var(--text-dim); letter-spacing:0.3px; }
+  button{ font-family:var(--font-body); cursor:pointer; border:none; outline:none; }
+  .send-btn{ background:var(--gold); color:#14120f; font-weight:600; font-size:13px; letter-spacing:0.5px; padding:9px 20px; border-radius:6px; transition:transform 0.1s ease, background 0.15s ease; }
+  .send-btn:hover{ background:#dcb433; }
+  .send-btn:active{ transform:scale(0.97); }
+  .send-btn:disabled{ background:var(--panel-2); color:var(--text-dim); cursor:not-allowed; }
+  .list-hdr{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .list-hdr span{ font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--text-dim); }
+  .clear-all{ background:transparent; color:var(--text-dim); font-size:11px; text-decoration:underline; padding:2px; }
+  .clear-all:hover{ color:var(--danger); }
+  .entry{ background:var(--panel); border:1px solid var(--line); border-left:2px solid var(--gold-soft); border-radius:8px; padding:14px; margin-bottom:10px; animation:slidein 0.25s ease; }
+  @keyframes slidein{ from{opacity:0; transform:translateY(-6px);} to{opacity:1; transform:translateY(0);} }
+  .entry-text{ font-size:15px; line-height:1.55; white-space:pre-wrap; word-break:break-word; margin-bottom:10px; }
+  .entry-foot{ display:flex; justify-content:space-between; align-items:center; }
+  .entry-time{ font-size:11px; color:var(--text-dim); }
+  .entry-actions{ display:flex; gap:8px; }
+  .icon-btn{ background:var(--panel-2); color:var(--text-dim); font-size:11px; padding:5px 10px; border-radius:5px; border:1px solid var(--line); }
+  .icon-btn:hover{ color:var(--gold); border-color:var(--gold-soft); }
+  .icon-btn.danger:hover{ color:var(--danger); border-color:var(--danger); }
+  .empty{ text-align:center; color:var(--text-dim); font-size:13px; padding:50px 20px; border:1px dashed var(--line); border-radius:10px; }
+  .toast{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--gold); color:#14120f; font-size:13px; font-weight:600; padding:9px 18px; border-radius:20px; opacity:0; pointer-events:none; transition:opacity 0.2s ease, transform 0.2s ease; }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:100; opacity:0; pointer-events:none; transition:opacity 0.2s ease; padding:20px; }
+  .modal-overlay.show{ opacity:1; pointer-events:auto; }
+  .modal{ background:var(--panel); border:1px solid var(--line); border-top:2px solid var(--gold); border-radius:10px; padding:20px; max-width:380px; width:100%; }
+  .modal h3{ font-family:var(--font-display); color:var(--gold); letter-spacing:1px; margin:0 0 12px; font-size:22px; font-weight:400; }
+  .modal p{ font-size:13px; line-height:1.6; color:var(--text); margin:0 0 14px; }
+  .modal p b{ color:var(--gold); }
+  .modal-close{ background:var(--gold); color:#14120f; font-weight:600; font-size:12px; padding:8px 16px; border-radius:6px; width:100%; }
+  .setup-banner{ background:var(--panel); border:1px solid var(--danger); border-radius:10px; padding:16px; margin-bottom:20px; font-size:13px; line-height:1.6; }
+  .setup-banner b{ color:var(--gold); }
+</style>
+</head>
+<body>
+<div id="root">
+  <div class="wrap">
+    <div class="hdr">
+      <h1>RELAY</h1>
+      <div class="hdr-actions">
+        <button class="install-btn" id="install-btn">+ Add to Home Screen</button>
+        <div class="status"><span class="dot" id="status-dot"></span><span id="status-text">connecting…</span></div>
+      </div>
+    </div>
+    <p class="sub">Type on one device, grab it on the other. Synced through your own Supabase project.</p>
+
+    <div id="setup-banner"></div>
+
+    <div class="settings-row">
+      <label>Auto-delete after
+        <select id="autoclear">
+          <option value="0">Never</option>
+          <option value="1">1 day</option>
+          <option value="3">3 days</option>
+          <option value="7" selected>7 days</option>
+          <option value="30">30 days</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="composer">
+      <textarea id="input" placeholder="Paste or type something to send to your other device…"></textarea>
+      <div class="composer-foot">
+        <span class="charcount" id="charcount">0 characters</span>
+        <button class="send-btn" id="send-btn">Send</button>
+      </div>
+    </div>
+
+    <div class="list-hdr">
+      <span id="list-count">History</span>
+      <button class="clear-all" id="clear-all">Clear all</button>
+    </div>
+
+    <div id="list"></div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <div class="modal-overlay" id="install-overlay">
+    <div class="modal">
+      <h3>Add to Home Screen</h3>
+      <p><b>iPhone (Safari):</b> tap the Share icon at the bottom, then scroll down and tap "Add to Home Screen".</p>
+      <p><b>Android (Chrome):</b> tap the ⋮ menu top right, then tap "Add to Home screen" or "Install app".</p>
+      <p><b>PC:</b> bookmark this page, or click the install icon in the address bar if your browser shows one.</p>
+      <button class="modal-close" id="modal-close">Got it</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+(function(){
+  // ---- FILL THESE IN from your Supabase project (Settings > API) ----
+  const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+  // ---------------------------------------------------------------------
+
+  const needsSetup = SUPABASE_URL.includes('YOUR_SUPABASE_URL') || SUPABASE_ANON_KEY.includes('YOUR_SUPABASE_ANON_KEY');
+  const setupBanner = document.getElementById('setup-banner');
+  if(needsSetup){
+    setupBanner.innerHTML = '<div class="setup-banner">Relay isn\'t connected yet. Open <b>index.html</b> and paste your Supabase URL and anon key at the top of the script. See SETUP.md for the exact steps.</div>';
+  }
+
+  const supabase = needsSetup ? null : window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const TABLE = 'relay_entries';
+
+  const input = document.getElementById('input');
+  const sendBtn = document.getElementById('send-btn');
+  const list = document.getElementById('list');
+  const charcount = document.getElementById('charcount');
+  const listCount = document.getElementById('list-count');
+  const clearAllBtn = document.getElementById('clear-all');
+  const statusText = document.getElementById('status-text');
+  const statusDot = document.getElementById('status-dot');
+  const toastEl = document.getElementById('toast');
+  const installBtn = document.getElementById('install-btn');
+  const installOverlay = document.getElementById('install-overlay');
+  const modalClose = document.getElementById('modal-close');
+  const autoclearSelect = document.getElementById('autoclear');
+
+  let entries = [];
+  let toastTimer = null;
+  let deferredInstallPrompt = null;
+
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=> toastEl.classList.remove('show'), 1400);
+  }
+
+  function setStatus(ok, label){
+    statusText.textContent = label;
+    statusDot.classList.toggle('off', !ok);
+  }
+
+  function timeAgo(ts){
+    const diff = Math.floor((Date.now() - ts) / 1000);
+    if(diff < 5) return 'just now';
+    if(diff < 60) return diff + 's ago';
+    if(diff < 3600) return Math.floor(diff/60) + 'm ago';
+    if(diff < 86400) return Math.floor(diff/3600) + 'h ago';
+    return new Date(ts).toLocaleDateString(undefined,{month:'short',day:'numeric'}) + ' ' +
+           new Date(ts).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+  }
+
+  function render(){
+    if(!entries.length){
+      list.innerHTML = '<div class="empty">Nothing sent yet. Type something above and hit Send —<br>it\'ll show up here on every device.</div>';
+      listCount.textContent = 'History';
+      return;
+    }
+    listCount.textContent = 'History (' + entries.length + ')';
+    list.innerHTML = entries.map(e => `
+      <div class="entry" data-id="${e.id}">
+        <div class="entry-text"></div>
+        <div class="entry-foot">
+          <span class="entry-time">${timeAgo(new Date(e.created_at).getTime())}</span>
+          <div class="entry-actions">
+            <button class="icon-btn copy-btn">Copy</button>
+            <button class="icon-btn danger del-btn">Delete</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+    [...list.querySelectorAll('.entry')].forEach(node => {
+      const id = node.getAttribute('data-id');
+      const entry = entries.find(e => String(e.id) === id);
+      node.querySelector('.entry-text').textContent = entry.text;
+      node.querySelector('.copy-btn').addEventListener('click', () => copyEntry(entry.text));
+      node.querySelector('.del-btn').addEventListener('click', () => deleteEntry(id));
+    });
+  }
+
+  function copyEntry(text){
+    navigator.clipboard.writeText(text).then(()=> showToast('Copied')).catch(()=> showToast('Could not copy'));
+  }
+
+  async function fetchEntries(){
+    if(!supabase) return;
+    const { data, error } = await supabase.from(TABLE).select('*').order('created_at', { ascending: false }).limit(200);
+    if(error){ console.error(error); setStatus(false, 'offline'); return; }
+    entries = data;
+    render();
+    setStatus(true, 'synced');
+  }
+
+  async function sendEntry(){
+    const text = input.value.trim();
+    if(!text || !supabase) return;
+    input.value = '';
+    charcount.textContent = '0 characters';
+    const { error } = await supabase.from(TABLE).insert({ text });
+    if(error){ console.error(error); showToast('Send failed'); return; }
+    fetchEntries();
+  }
+
+  async function deleteEntry(id){
+    if(!supabase) return;
+    const { error } = await supabase.from(TABLE).delete().eq('id', id);
+    if(error){ console.error(error); showToast('Delete failed'); return; }
+    fetchEntries();
+  }
+
+  clearAllBtn.addEventListener('click', async () => {
+    if(!supabase || !entries.length) return;
+    const { error } = await supabase.from(TABLE).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    if(error){ console.error(error); showToast('Clear failed'); return; }
+    fetchEntries();
+  });
+
+  sendBtn.addEventListener('click', sendEntry);
+  input.addEventListener('keydown', (e) => {
+    if((e.metaKey || e.ctrlKey) && e.key === 'Enter'){ e.preventDefault(); sendEntry(); }
+  });
+  input.addEventListener('input', () => { charcount.textContent = input.value.length + ' characters'; });
+
+  // --- auto-clear (local preference, applied against the shared DB) ---
+  function loadSettings(){
+    const saved = localStorage.getItem('relay-autoclear-days');
+    autoclearSelect.value = saved !== null ? saved : '7';
+  }
+  autoclearSelect.addEventListener('change', () => {
+    localStorage.setItem('relay-autoclear-days', autoclearSelect.value);
+    purgeOld();
+  });
+  async function purgeOld(){
+    const days = parseInt(autoclearSelect.value, 10);
+    if(!days || !supabase) return;
+    const cutoff = new Date(Date.now() - days * 86400000).toISOString();
+    const { error } = await supabase.from(TABLE).delete().lt('created_at', cutoff);
+    if(!error) fetchEntries();
+  }
+
+  // --- install to home screen ---
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstallPrompt = e; });
+  installBtn.addEventListener('click', async () => {
+    if(deferredInstallPrompt){ deferredInstallPrompt.prompt(); deferredInstallPrompt = null; }
+    else{ installOverlay.classList.add('show'); }
+  });
+  modalClose.addEventListener('click', () => installOverlay.classList.remove('show'));
+  installOverlay.addEventListener('click', (e) => { if(e.target === installOverlay) installOverlay.classList.remove('show'); });
+
+  // --- service worker (enables install + offline app shell) ---
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch((err) => console.error('SW register failed', err));
+    });
+  }
+
+  // --- init ---
+  loadSettings();
+  if(supabase){
+    setStatus(false, 'connecting…');
+    fetchEntries().then(purgeOld);
+
+    supabase
+      .channel('relay_entries_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: TABLE }, () => fetchEntries())
+      .subscribe((status) => {
+        if(status === 'SUBSCRIBED') setStatus(true, 'synced');
+      });
+
+    // fallback poll in case realtime drops
+    setInterval(fetchEntries, 8000);
+  }else{
+    setStatus(false, 'not connected');
+  }
+})();
+</script>
+</body>
+</html>
