@@ -2,7 +2,7 @@
 // and opens instantly. Never caches Supabase requests: those always
 // go to the network so your text stays live and in sync.
 
-const CACHE_NAME = 'relay-shell-v1';
+const CACHE_NAME = 'relay-shell-v2';
 const SHELL_FILES = [
   './',
   './index.html',

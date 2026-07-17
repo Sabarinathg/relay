@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Relay</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#14120f">
+<meta name="theme-color" content="#C6F135">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,66 +13,84 @@
 <meta name="apple-mobile-web-app-title" content="Relay">
 <style>
   :root{
-    --bg:#14120f;
-    --panel:#1c1a16;
-    --panel-2:#211f1a;
-    --line:#332f27;
-    --gold:#c9a227;
-    --gold-soft:#8a7326;
-    --text:#ede7dc;
-    --text-dim:#8a8578;
-    --danger:#a8462f;
-    --font-display:'Bebas Neue', 'Arial Narrow', sans-serif;
-    --font-body:-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, sans-serif;
+    --bg:#F4F1E8;
+    --ink:#111111;
+    --lime:#C6F135;
+    --pink:#FF6EC7;
+    --purple:#8B6BFF;
+    --white:#ffffff;
+    --text-dim:#4D4D4D;
+    --danger:#E24B4A;
+    --font-body:Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
   *{box-sizing:border-box;}
   html,body{
     margin:0; padding:0;
-    background:var(--bg); color:var(--text);
+    background:var(--bg); color:var(--ink);
     font-family:var(--font-body);
     -webkit-font-smoothing:antialiased;
   }
-  #root{ min-height:100vh; display:flex; justify-content:center; padding:28px 16px 60px; }
-  .wrap{ width:100%; max-width:640px; }
-  .hdr{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:6px; }
-  .hdr h1{ font-family:var(--font-display); font-size:38px; letter-spacing:2px; margin:0; color:var(--gold); font-weight:400; }
+  #root{ min-height:100vh; display:flex; justify-content:center; padding:0; }
+  .wrap{
+    width:100%; max-width:640px;
+    border:3px solid var(--ink);
+    background-image:linear-gradient(#00000012 1px,transparent 1px),linear-gradient(90deg,#00000012 1px,transparent 1px);
+    background-size:16px 16px;
+    min-height:100vh;
+  }
+  .hdr{
+    background:var(--lime);
+    border-bottom:3px solid var(--ink);
+    padding:16px 20px;
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .hdr h1{ font-size:26px; font-weight:900; margin:0; color:var(--ink); letter-spacing:0.5px; }
   .hdr-actions{ display:flex; align-items:center; gap:10px; }
-  .status{ display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-dim); letter-spacing:0.5px; text-transform:uppercase; }
-  .dot{ width:7px;height:7px;border-radius:50%; background:var(--gold); animation:pulse 2s ease-in-out infinite; }
+  .status{
+    display:flex; align-items:center; gap:6px;
+    background:var(--ink); color:var(--lime);
+    font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px;
+    padding:5px 10px;
+  }
+  .dot{ width:7px;height:7px;border-radius:50%; background:var(--lime); animation:pulse 2s ease-in-out infinite; }
   .dot.off{ background:var(--danger); animation:none; }
-  @keyframes pulse{ 0%,100%{opacity:1; box-shadow:0 0 0 0 rgba(201,162,39,0.5);} 50%{opacity:0.5; box-shadow:0 0 0 4px rgba(201,162,39,0);} }
-  .sub{ color:var(--text-dim); font-size:13px; margin:0 0 20px; border-bottom:1px solid var(--line); padding-bottom:20px; }
-  .settings-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:11px; color:var(--text-dim); margin:-6px 0 22px; flex-wrap:wrap; }
-  .settings-row label{ display:flex; align-items:center; gap:6px; }
-  .settings-row select{ background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:5px; padding:4px 6px; font-size:11px; font-family:var(--font-body); }
-  .composer{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:26px; }
-  textarea{ width:100%; min-height:90px; resize:vertical; background:transparent; border:none; outline:none; color:var(--text); font-family:var(--font-body); font-size:15px; line-height:1.5; }
-  textarea::placeholder{ color:var(--text-dim); }
-  .composer-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:8px; padding-top:10px; border-top:1px solid var(--line); }
-  .charcount{ font-size:11px; color:var(--text-dim); letter-spacing:0.3px; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+  .body-pad{ padding:20px; }
+  .sub{ color:var(--text-dim); font-size:13px; font-weight:600; margin:0 0 18px; }
+  .settings-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:11px; font-weight:700; color:var(--ink); margin:0 0 18px; flex-wrap:wrap; text-transform:uppercase; }
+  .settings-row label{ display:flex; align-items:center; gap:8px; }
+  .settings-row select{ background:var(--white); color:var(--ink); border:2px solid var(--ink); padding:5px 8px; font-size:11px; font-weight:700; font-family:var(--font-body); }
+  .composer{ background:var(--purple); border:3px solid var(--ink); padding:14px; margin-bottom:20px; box-shadow:4px 4px 0 var(--ink); }
+  .composer-inner{ background:var(--white); border:3px solid var(--ink); padding:10px; }
+  textarea{ width:100%; min-height:70px; resize:vertical; background:transparent; border:none; outline:none; color:var(--ink); font-family:var(--font-body); font-size:14px; font-weight:600; line-height:1.5; }
+  textarea::placeholder{ color:#8a8a8a; font-weight:600; }
+  .composer-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
+  .charcount{ font-size:11px; font-weight:700; color:var(--ink); letter-spacing:0.3px; }
   button{ font-family:var(--font-body); cursor:pointer; border:none; outline:none; }
-  .send-btn{ background:var(--gold); color:#14120f; font-weight:600; font-size:13px; letter-spacing:0.5px; padding:9px 20px; border-radius:6px; transition:transform 0.1s ease, background 0.15s ease; }
-  .send-btn:hover{ background:#dcb433; }
-  .send-btn:active{ transform:scale(0.97); }
-  .send-btn:disabled{ background:var(--panel-2); color:var(--text-dim); cursor:not-allowed; }
+  .send-btn{ background:var(--pink); color:var(--ink); font-weight:900; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; padding:9px 22px; border:3px solid var(--ink); box-shadow:3px 3px 0 var(--ink); transition:transform 0.08s ease; }
+  .send-btn:hover{ filter:brightness(1.05); }
+  .send-btn:active{ transform:translate(2px,2px); box-shadow:1px 1px 0 var(--ink); }
+  .send-btn:disabled{ background:#ddd; color:#999; cursor:not-allowed; box-shadow:none; }
   .list-hdr{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
-  .list-hdr span{ font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--text-dim); }
-  .clear-all{ background:transparent; color:var(--text-dim); font-size:11px; text-decoration:underline; padding:2px; }
-  .clear-all:hover{ color:var(--danger); }
-  .entry{ background:var(--panel); border:1px solid var(--line); border-left:2px solid var(--gold-soft); border-radius:8px; padding:14px; margin-bottom:10px; animation:slidein 0.25s ease; }
+  .list-hdr span{ background:var(--ink); color:var(--white); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; }
+  .clear-all{ background:transparent; color:var(--ink); font-size:11px; font-weight:800; text-transform:uppercase; border-bottom:2px solid var(--ink); padding:2px 0; }
+  .clear-all:hover{ color:var(--danger); border-color:var(--danger); }
+  .entry{ background:var(--pink); border:3px solid var(--ink); border-radius:10px; padding:14px; margin-bottom:12px; box-shadow:3px 3px 0 var(--ink); animation:slidein 0.25s ease; }
+  .entry:nth-child(even){ background:var(--lime); }
   @keyframes slidein{ from{opacity:0; transform:translateY(-6px);} to{opacity:1; transform:translateY(0);} }
-  .entry-text{ font-size:15px; line-height:1.55; white-space:pre-wrap; word-break:break-word; margin-bottom:10px; }
+  .entry-text{ font-size:14px; font-weight:700; line-height:1.5; white-space:pre-wrap; word-break:break-word; margin-bottom:10px; color:var(--ink); }
   .entry-foot{ display:flex; justify-content:space-between; align-items:center; }
-  .entry-time{ font-size:11px; color:var(--text-dim); }
-  .entry-actions{ display:flex; gap:8px; }
-  .icon-btn{ background:var(--panel-2); color:var(--text-dim); font-size:11px; padding:5px 10px; border-radius:5px; border:1px solid var(--line); }
-  .icon-btn:hover{ color:var(--gold); border-color:var(--gold-soft); }
-  .icon-btn.danger:hover{ color:var(--danger); border-color:var(--danger); }
-  .empty{ text-align:center; color:var(--text-dim); font-size:13px; padding:50px 20px; border:1px dashed var(--line); border-radius:10px; }
-  .toast{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--gold); color:#14120f; font-size:13px; font-weight:600; padding:9px 18px; border-radius:20px; opacity:0; pointer-events:none; transition:opacity 0.2s ease, transform 0.2s ease; }
+  .entry-time{ font-size:10px; font-weight:800; color:var(--ink); text-transform:uppercase; }
+  .entry-actions{ display:flex; gap:6px; }
+  .icon-btn{ background:var(--white); color:var(--ink); font-size:10px; font-weight:800; text-transform:uppercase; padding:4px 10px; border-radius:6px; border:2px solid var(--ink); }
+  .icon-btn:hover{ filter:brightness(0.95); }
+  .icon-btn.danger{ background:var(--ink); color:var(--white); }
+  .icon-btn.danger:hover{ background:var(--danger); border-color:var(--danger); }
+  .empty{ text-align:center; color:var(--text-dim); font-size:13px; font-weight:600; padding:50px 20px; border:3px dashed var(--ink); background:var(--white); }
+  .toast{ position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--ink); color:var(--lime); font-size:13px; font-weight:800; text-transform:uppercase; padding:9px 18px; border:2px solid var(--ink); opacity:0; pointer-events:none; transition:opacity 0.2s ease, transform 0.2s ease; }
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
-  .setup-banner{ background:var(--panel); border:1px solid var(--danger); border-radius:10px; padding:16px; margin-bottom:20px; font-size:13px; line-height:1.6; }
-  .setup-banner b{ color:var(--gold); }
+  .setup-banner{ background:var(--white); border:3px solid var(--danger); padding:16px; margin-bottom:20px; font-size:13px; font-weight:600; line-height:1.6; }
+  .setup-banner b{ color:var(--danger); }
 </style>
 </head>
 <body>
@@ -84,6 +102,8 @@
         <div class="status"><span class="dot" id="status-dot"></span><span id="status-text">connecting…</span></div>
       </div>
     </div>
+
+    <div class="body-pad">
     <p class="sub">Type on one device, grab it on the other. Synced through your own Supabase project.</p>
 
     <div id="setup-banner"></div>
@@ -101,10 +121,12 @@
     </div>
 
     <div class="composer">
-      <textarea id="input" placeholder="Paste or type something to send to your other device…"></textarea>
+      <div class="composer-inner">
+        <textarea id="input" placeholder="Paste or type something to send to your other device…"></textarea>
+      </div>
       <div class="composer-foot">
         <span class="charcount" id="charcount">0 characters</span>
-        <button class="send-btn" id="send-btn">Send</button>
+        <button class="send-btn" id="send-btn">Send &#8594;</button>
       </div>
     </div>
 
@@ -114,6 +136,7 @@
     </div>
 
     <div id="list"></div>
+    </div>
   </div>
   <div class="toast" id="toast"></div>
 
@@ -123,8 +146,8 @@
 <script>
 (function(){
   // ---- FILL THESE IN from your Supabase project (Settings > API) ----
-  const SUPABASE_URL = 'https://spgoegviwtunultgczyh.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwZ29lZ3Zpd3R1bnVsdGdjenloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM3MTg3NDUsImV4cCI6MjA5OTI5NDc0NX0.cFOzEjOXVc5e89xngtWP7dzJ7SS6fJpF5xWtHgGC1kQ';
+  const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
   // ---------------------------------------------------------------------
 
   const needsSetup = SUPABASE_URL.includes('YOUR_SUPABASE_URL') || SUPABASE_ANON_KEY.includes('YOUR_SUPABASE_ANON_KEY');
@@ -186,7 +209,7 @@
           <span class="entry-time">${timeAgo(new Date(e.created_at).getTime())}</span>
           <div class="entry-actions">
             <button class="icon-btn copy-btn">Copy</button>
-            <button class="icon-btn danger del-btn">Delete</button>
+            <button class="icon-btn danger del-btn">Del</button>
           </div>
         </div>
       </div>
