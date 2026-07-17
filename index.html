@@ -77,8 +77,13 @@
   .send-btn:hover{ filter:brightness(1.05); }
   .send-btn:active{ transform:translate(2px,2px); box-shadow:1px 1px 0 var(--ink); }
   .send-btn:disabled{ background:#ddd; color:#999; cursor:not-allowed; box-shadow:none; }
-  .list-hdr{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .list-hdr{ display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:10px; }
+  .list-hdr-left{ display:flex; align-items:center; gap:8px; }
   .list-hdr span{ background:var(--ink); color:var(--white); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; padding:4px 10px; }
+  .new-updates-btn{ display:none; align-items:center; gap:6px; background:var(--pink); color:var(--ink); font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:0.4px; padding:4px 10px; border:2px solid var(--ink); animation:blink 1.4s ease-in-out infinite; }
+  .new-updates-btn.show{ display:inline-flex; }
+  .new-updates-btn .nb-dot{ width:6px; height:6px; border-radius:50%; background:var(--ink); }
+  @keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:0.55;} }
   .clear-all{ background:transparent; color:var(--ink); font-size:11px; font-weight:800; text-transform:uppercase; border-bottom:2px solid var(--ink); padding:2px 0; }
   .clear-all:hover{ color:var(--danger); border-color:var(--danger); }
   .entry{ background:var(--pink); border:3px solid var(--ink); border-radius:10px; padding:14px; margin-bottom:12px; box-shadow:3px 3px 0 var(--ink); animation:slidein 0.25s ease; }
@@ -150,7 +155,10 @@
     </div>
 
     <div class="list-hdr">
-      <span id="list-count">History</span>
+      <div class="list-hdr-left">
+        <span id="list-count">History</span>
+        <button class="new-updates-btn" id="new-updates-btn" type="button"><span class="nb-dot"></span>Incoming!</button>
+      </div>
       <button class="clear-all" id="clear-all">Clear all</button>
     </div>
 
@@ -193,6 +201,7 @@
   const fileChip = document.getElementById('file-chip');
   const fileChipName = document.getElementById('file-chip-name');
   const fileRemove = document.getElementById('file-remove');
+  const newUpdatesBtn = document.getElementById('new-updates-btn');
 
   let entries = [];
   let toastTimer = null;
@@ -239,6 +248,9 @@
         }
       }
       const textHtml = e.text ? '<div class="entry-text"></div>' : '';
+      const actionBtn = e.file_url
+        ? '<button class="icon-btn download-btn">Download</button>'
+        : '<button class="icon-btn copy-btn">Copy</button>';
       return `
       <div class="entry" data-id="${e.id}">
         ${media}
@@ -246,7 +258,7 @@
         <div class="entry-foot">
           <span class="entry-time">${timeAgo(new Date(e.created_at).getTime())}</span>
           <div class="entry-actions">
-            <button class="icon-btn copy-btn">Copy</button>
+            ${actionBtn}
             <button class="icon-btn danger del-btn">Del</button>
           </div>
         </div>
@@ -258,14 +270,33 @@
       const entry = entries.find(e => String(e.id) === id);
       const textNode = node.querySelector('.entry-text');
       if(textNode) textNode.textContent = entry.text;
-      node.querySelector('.copy-btn').addEventListener('click', () => {
-        if(entry.file_url && !entry.text) copyEntry(entry.file_url);
-        else copyEntry(entry.text);
-      });
+      const copyBtn = node.querySelector('.copy-btn');
+      if(copyBtn) copyBtn.addEventListener('click', () => copyEntry(entry.text));
+      const downloadBtn = node.querySelector('.download-btn');
+      if(downloadBtn) downloadBtn.addEventListener('click', () => downloadFile(entry.file_url, entry.file_name));
       node.querySelector('.del-btn').addEventListener('click', () => deleteEntry(id));
       const img = node.querySelector('.entry-img');
       if(img) img.addEventListener('click', () => window.open(img.dataset.open, '_blank'));
     });
+  }
+
+  async function downloadFile(url, filename){
+    try{
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const objUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objUrl;
+      a.download = filename || 'file';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objUrl);
+      showToast('Downloaded');
+    }catch(err){
+      console.error(err);
+      window.open(url, '_blank');
+    }
   }
 
   function copyEntry(text){
@@ -278,8 +309,22 @@
     if(error){ console.error(error); setStatus(false, 'offline'); return; }
     entries = data;
     render();
+    newUpdatesBtn.classList.remove('show');
     setStatus(true, 'synced');
   }
+
+  async function checkForUpdates(){
+    if(!supabase) return;
+    const { data, error } = await supabase.from(TABLE).select('id').order('created_at', { ascending: false }).limit(1);
+    if(error) return;
+    const latestId = data && data[0] ? data[0].id : null;
+    const knownId = entries[0] ? entries[0].id : null;
+    if(latestId !== knownId){
+      newUpdatesBtn.classList.add('show');
+    }
+  }
+
+  newUpdatesBtn.addEventListener('click', fetchEntries);
 
   async function sendEntry(){
     const text = input.value.trim();
@@ -407,13 +452,13 @@
 
     supabase
       .channel('relay_entries_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: TABLE }, () => fetchEntries())
+      .on('postgres_changes', { event: '*', schema: 'public', table: TABLE }, () => checkForUpdates())
       .subscribe((status) => {
         if(status === 'SUBSCRIBED') setStatus(true, 'synced');
       });
 
-    // fallback poll in case realtime drops
-    setInterval(fetchEntries, 8000);
+    // lightweight fallback check in case realtime drops — does not auto-render
+    setInterval(checkForUpdates, 10000);
   }else{
     setStatus(false, 'not connected');
   }
