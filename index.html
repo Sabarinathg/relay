@@ -64,7 +64,13 @@
   .composer-inner{ background:var(--white); border:3px solid var(--ink); padding:10px; }
   textarea{ width:100%; min-height:70px; resize:vertical; background:transparent; border:none; outline:none; color:var(--ink); font-family:var(--font-body); font-size:14px; font-weight:600; line-height:1.5; }
   textarea::placeholder{ color:#8a8a8a; font-weight:600; }
-  .composer-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; }
+  .composer-foot{ display:flex; justify-content:space-between; align-items:center; margin-top:10px; gap:10px; }
+  .composer-foot-left{ display:flex; align-items:center; gap:10px; }
+  .attach-btn{ background:var(--white); color:var(--ink); font-weight:900; font-size:16px; width:34px; height:34px; display:flex; align-items:center; justify-content:center; border:3px solid var(--ink); }
+  .attach-btn:hover{ background:var(--lime); }
+  .file-chip{ display:none; align-items:center; gap:8px; background:var(--lime); border:2px solid var(--ink); padding:6px 10px; margin-top:10px; font-size:12px; font-weight:700; }
+  .file-chip.show{ display:flex; }
+  .file-chip .file-remove{ background:var(--ink); color:var(--white); width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; cursor:pointer; }
   .charcount{ font-size:11px; font-weight:700; color:var(--ink); letter-spacing:0.3px; }
   button{ font-family:var(--font-body); cursor:pointer; border:none; outline:none; }
   .send-btn{ background:var(--pink); color:var(--ink); font-weight:900; font-size:12px; text-transform:uppercase; letter-spacing:0.5px; padding:9px 22px; border:3px solid var(--ink); box-shadow:3px 3px 0 var(--ink); transition:transform 0.08s ease; }
@@ -79,6 +85,11 @@
   .entry:nth-child(even){ background:var(--lime); }
   @keyframes slidein{ from{opacity:0; transform:translateY(-6px);} to{opacity:1; transform:translateY(0);} }
   .entry-text{ font-size:14px; font-weight:700; line-height:1.5; white-space:pre-wrap; word-break:break-word; margin-bottom:10px; color:var(--ink); }
+  .entry-img{ width:100%; max-height:280px; object-fit:cover; border:3px solid var(--ink); margin-bottom:10px; cursor:pointer; display:block; }
+  .entry-file{ display:flex; align-items:center; gap:10px; background:var(--white); border:3px solid var(--ink); padding:10px; margin-bottom:10px; }
+  .entry-file-icon{ width:34px; height:34px; background:var(--ink); color:var(--white); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; flex-shrink:0; }
+  .entry-file-name{ font-size:12px; font-weight:700; color:var(--ink); word-break:break-all; flex:1; }
+  .entry-file a{ color:var(--ink); text-decoration:underline; font-size:11px; font-weight:800; text-transform:uppercase; flex-shrink:0; }
   .entry-foot{ display:flex; justify-content:space-between; align-items:center; }
   .entry-time{ font-size:10px; font-weight:800; color:var(--ink); text-transform:uppercase; }
   .entry-actions{ display:flex; gap:6px; }
@@ -124,10 +135,18 @@
       <div class="composer-inner">
         <textarea id="input" placeholder="Paste or type something to send to your other device…"></textarea>
       </div>
+      <div class="file-chip" id="file-chip">
+        <span id="file-chip-name"></span>
+        <span class="file-remove" id="file-remove">&#10005;</span>
+      </div>
       <div class="composer-foot">
-        <span class="charcount" id="charcount">0 characters</span>
+        <div class="composer-foot-left">
+          <button class="attach-btn" id="attach-btn" title="Attach image or PDF" type="button">+</button>
+          <span class="charcount" id="charcount">0 characters</span>
+        </div>
         <button class="send-btn" id="send-btn">Send &#8594;</button>
       </div>
+      <input type="file" id="file-input" accept="image/*,application/pdf" style="display:none">
     </div>
 
     <div class="list-hdr">
@@ -169,9 +188,17 @@
   const statusDot = document.getElementById('status-dot');
   const toastEl = document.getElementById('toast');
   const autoclearSelect = document.getElementById('autoclear');
+  const attachBtn = document.getElementById('attach-btn');
+  const fileInput = document.getElementById('file-input');
+  const fileChip = document.getElementById('file-chip');
+  const fileChipName = document.getElementById('file-chip-name');
+  const fileRemove = document.getElementById('file-remove');
 
   let entries = [];
   let toastTimer = null;
+  let selectedFile = null;
+  const BUCKET = 'relay-files';
+  const MAX_FILE_MB = 15;
 
   function showToast(msg){
     toastEl.textContent = msg;
@@ -202,9 +229,20 @@
       return;
     }
     listCount.textContent = 'History (' + entries.length + ')';
-    list.innerHTML = entries.map(e => `
+    list.innerHTML = entries.map(e => {
+      let media = '';
+      if(e.file_url){
+        if(e.file_type === 'image'){
+          media = `<img class="entry-img" src="${e.file_url}" alt="${e.file_name || 'shared image'}" data-open="${e.file_url}">`;
+        }else{
+          media = `<div class="entry-file"><div class="entry-file-icon">PDF</div><span class="entry-file-name">${e.file_name || 'document.pdf'}</span><a href="${e.file_url}" target="_blank" rel="noopener">Open</a></div>`;
+        }
+      }
+      const textHtml = e.text ? '<div class="entry-text"></div>' : '';
+      return `
       <div class="entry" data-id="${e.id}">
-        <div class="entry-text"></div>
+        ${media}
+        ${textHtml}
         <div class="entry-foot">
           <span class="entry-time">${timeAgo(new Date(e.created_at).getTime())}</span>
           <div class="entry-actions">
@@ -213,13 +251,20 @@
           </div>
         </div>
       </div>
-    `).join('');
+    `;
+    }).join('');
     [...list.querySelectorAll('.entry')].forEach(node => {
       const id = node.getAttribute('data-id');
       const entry = entries.find(e => String(e.id) === id);
-      node.querySelector('.entry-text').textContent = entry.text;
-      node.querySelector('.copy-btn').addEventListener('click', () => copyEntry(entry.text));
+      const textNode = node.querySelector('.entry-text');
+      if(textNode) textNode.textContent = entry.text;
+      node.querySelector('.copy-btn').addEventListener('click', () => {
+        if(entry.file_url && !entry.text) copyEntry(entry.file_url);
+        else copyEntry(entry.text);
+      });
       node.querySelector('.del-btn').addEventListener('click', () => deleteEntry(id));
+      const img = node.querySelector('.entry-img');
+      if(img) img.addEventListener('click', () => window.open(img.dataset.open, '_blank'));
     });
   }
 
@@ -238,18 +283,59 @@
 
   async function sendEntry(){
     const text = input.value.trim();
-    if(!text || !supabase) return;
+    if(!text && !selectedFile) return;
+    if(!supabase) return;
+
+    sendBtn.disabled = true;
+    let file_url = null, file_name = null, file_type = null;
+
+    if(selectedFile){
+      const isImage = selectedFile.type.startsWith('image/');
+      const isPdf = selectedFile.type === 'application/pdf';
+      if(!isImage && !isPdf){
+        showToast('Only images or PDFs');
+        sendBtn.disabled = false;
+        return;
+      }
+      if(selectedFile.size > MAX_FILE_MB * 1024 * 1024){
+        showToast('File too large (max ' + MAX_FILE_MB + 'MB)');
+        sendBtn.disabled = false;
+        return;
+      }
+      const ext = selectedFile.name.split('.').pop();
+      const path = Date.now() + '-' + Math.random().toString(36).slice(2,8) + '.' + ext;
+      const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, selectedFile);
+      if(upErr){
+        console.error(upErr);
+        showToast('Upload failed');
+        sendBtn.disabled = false;
+        return;
+      }
+      const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
+      file_url = pub.publicUrl;
+      file_name = selectedFile.name;
+      file_type = isImage ? 'image' : 'pdf';
+    }
+
     input.value = '';
     charcount.textContent = '0 characters';
-    const { error } = await supabase.from(TABLE).insert({ text });
+    clearFile();
+
+    const { error } = await supabase.from(TABLE).insert({ text, file_url, file_name, file_type });
+    sendBtn.disabled = false;
     if(error){ console.error(error); showToast('Send failed'); return; }
     fetchEntries();
   }
 
   async function deleteEntry(id){
     if(!supabase) return;
+    const entry = entries.find(e => String(e.id) === id);
     const { error } = await supabase.from(TABLE).delete().eq('id', id);
     if(error){ console.error(error); showToast('Delete failed'); return; }
+    if(entry && entry.file_url){
+      const path = entry.file_url.split('/' + BUCKET + '/').pop();
+      if(path) supabase.storage.from(BUCKET).remove([path]).catch(() => {});
+    }
     fetchEntries();
   }
 
@@ -265,6 +351,29 @@
     if((e.metaKey || e.ctrlKey) && e.key === 'Enter'){ e.preventDefault(); sendEntry(); }
   });
   input.addEventListener('input', () => { charcount.textContent = input.value.length + ' characters'; });
+
+  attachBtn.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => {
+    const f = fileInput.files[0];
+    if(!f) return;
+    const isImage = f.type.startsWith('image/');
+    const isPdf = f.type === 'application/pdf';
+    if(!isImage && !isPdf){
+      showToast('Only images or PDFs');
+      fileInput.value = '';
+      return;
+    }
+    selectedFile = f;
+    fileChipName.textContent = f.name;
+    fileChip.classList.add('show');
+  });
+  function clearFile(){
+    selectedFile = null;
+    fileInput.value = '';
+    fileChip.classList.remove('show');
+    fileChipName.textContent = '';
+  }
+  fileRemove.addEventListener('click', clearFile);
 
   // --- auto-clear (local preference, applied against the shared DB) ---
   function loadSettings(){
